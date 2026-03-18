@@ -6,6 +6,8 @@ from typing import Optional
 from x_migrate import config as cfg
 from x_migrate.extract import run_extract
 from x_migrate.follow import run_follow
+from x_migrate.list_add import run_list_add
+from x_migrate.report_cmd import run_report
 
 app = typer.Typer(help="Migrate X (Twitter) lists and follows between accounts.")
 
@@ -66,14 +68,10 @@ def list_add(
     list_name: str = typer.Option(..., help="Name of the list to add members to"),
 ):
     """Add members to an X list."""
-    cfg.load()
-    print("not implemented yet")
-    raise SystemExit(0)
+    asyncio.run(run_list_add(list_name))
 
 
 @app.command()
 def report():
     """Compare following vs members in lists."""
-    cfg.load()
-    print("not implemented yet")
-    raise SystemExit(0)
+    asyncio.run(run_report())
