@@ -5,6 +5,7 @@ from typing import Optional
 
 from x_migrate import config as cfg
 from x_migrate.extract import run_extract
+from x_migrate.follow import run_follow
 
 app = typer.Typer(help="Migrate X (Twitter) lists and follows between accounts.")
 
@@ -57,9 +58,7 @@ def follow(
     dry_run: bool = typer.Option(False, "--dry-run", help="Simulate without making changes"),
 ):
     """Follow accounts from extracted list."""
-    cfg.load()
-    print("not implemented yet")
-    raise SystemExit(0)
+    asyncio.run(run_follow(limit=limit, dry_run=dry_run))
 
 
 @app.command()
