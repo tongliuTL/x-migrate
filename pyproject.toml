@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "x-migrate"
+version = "0.1.0"
+description = "Migrate X (Twitter) lists between accounts"
+requires-python = ">=3.11"
+dependencies = [
+    "playwright>=1.40",
+    "typer>=0.9",
+    "rich>=13",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.scripts]
+x-migrate = "x_migrate.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/x_migrate"]
