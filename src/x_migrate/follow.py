@@ -7,7 +7,8 @@ X account opened in a Playwright browser session.
 import asyncio
 import random
 
-from x_migrate import browser, config, progress as progress_store
+from x_migrate import browser, config, progress as progress_store, ui
+from rich.live import Live
 
 FINAL_STATUSES = {"followed", "already_following", "requested", "unavailable"}
 
@@ -215,50 +216,38 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
         print(f"\nProcessing {total} members (session limit: {limit} follows)...")
         print("Do not interact with the browser while this runs.\n")
 
-        for i, username in enumerate(to_process):
-            print(f"[{i + 1}/{total}] @{username} ... ", end="", flush=True)
+        progress = ui.make_progress()
+        task_id = progress.add_task("Following...", total=total)
 
-            result = await follow_user(page, username)
-            data[username]["status"] = result
-            progress_store.save(active_job, data)
+        with Live(progress, console=ui.console, refresh_per_second=4):
+            for i, username in enumerate(to_process):
+                progress.update(task_id, advance=1, description=f"@{username}")
 
-            if result == "followed":
-                followed_this_run += 1
-                print("followed")
-            elif result == "already_following":
-                print("already following")
-            elif result == "requested":
-                followed_this_run += 1
-                print("requested (protected account)")
-            elif result == "unavailable":
-                print("unavailable (suspended or deleted)")
-            elif result == "rate_limited":
-                print("RATE LIMITED")
-                print("\n  X has throttled this account. Stopping now to protect it.")
-                print("  Re-run tomorrow. All progress is saved.\n")
-                break
-            else:
-                print("error (will retry next run)")
+                result = await follow_user(page, username)
+                data[username]["status"] = result
+                progress_store.save(active_job, data)
 
-            if followed_this_run >= limit:
-                print(f"\n  [Session limit of {limit} follows reached. Stopping for today.]")
-                print("  Re-run tomorrow. All progress is saved.\n")
-                break
+                ui.console.print(f"  @{username}: {ui.status_style(result)}")
 
-            delay = human_delay()
-            await asyncio.sleep(delay)
+                if result == "followed":
+                    followed_this_run += 1
+                elif result == "requested":
+                    followed_this_run += 1
+                elif result == "rate_limited":
+                    ui.console.print("\n  [bold red]X has throttled this account. Stopping now to protect it.[/bold red]")
+                    ui.console.print("  Re-run tomorrow. All progress is saved.\n")
+                    break
 
-        # Print summary
-        counts = progress_store.summary(data)
-        remaining_pending = len(progress_store.pending(data))
-        print(f"\n{'=' * 60}")
-        print(f"  followed          : {counts.get('followed', 0)}")
-        print(f"  already following : {counts.get('already_following', 0)}")
-        print(f"  requested         : {counts.get('requested', 0)}")
-        print(f"  unavailable       : {counts.get('unavailable', 0)}")
-        print(f"  error (retry)     : {counts.get('error', 0)}")
-        print(f"  not yet processed : {remaining_pending}")
-        print(f"{'=' * 60}")
+                if followed_this_run >= limit:
+                    ui.console.print(f"\n  [Session limit of {limit} follows reached. Stopping for today.]")
+                    ui.console.print("  Re-run tomorrow. All progress is saved.\n")
+                    break
+
+                delay = human_delay()
+                await asyncio.sleep(delay)
+
+        # Print summary (outside Live context)
+        ui.print_summary(data, "Follow Session")
 
     finally:
         await ctx.close()

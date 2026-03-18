@@ -7,7 +7,8 @@ on the destination account.
 import asyncio
 import random
 
-from x_migrate import browser, config, progress as progress_store
+from x_migrate import browser, config, progress as progress_store, ui
+from rich.live import Live
 
 
 async def add_to_list(page, username: str, list_name: str) -> bool:
@@ -90,27 +91,28 @@ async def run_list_add(list_name: str) -> None:
         print(f"\nAdding {total} members to '{list_name}'...")
         print("Do not interact with the browser while this runs.\n")
 
-        for i, username in enumerate(pending):
-            print(f"[{i + 1}/{total}] @{username} ... ", end="", flush=True)
+        progress = ui.make_progress()
+        task_id = progress.add_task("Adding to list...", total=total)
 
-            success = await add_to_list(page, username, list_name)
+        with Live(progress, console=ui.console, refresh_per_second=4):
+            for i, username in enumerate(pending):
+                progress.update(task_id, advance=1, description=f"@{username}")
 
-            if success:
-                data[username]["status"] = "added_to_list"
-                added_count += 1
-                print("OK")
-            else:
-                data[username]["status"] = "list_add_failed"
-                failed_count += 1
-                print("FAILED")
+                success = await add_to_list(page, username, list_name)
 
-            progress_store.save(active_job, data)
+                if success:
+                    data[username]["status"] = "added_to_list"
+                    added_count += 1
+                    ui.console.print(f"  @{username}: {ui.status_style('added_to_list')}")
+                else:
+                    data[username]["status"] = "list_add_failed"
+                    failed_count += 1
+                    ui.console.print(f"  @{username}: {ui.status_style('list_add_failed')}")
 
-        # Print summary
-        print(f"\n{'=' * 60}")
-        print(f"  Added to list  : {added_count}")
-        print(f"  Failed         : {failed_count}")
-        print(f"{'=' * 60}")
+                progress_store.save(active_job, data)
+
+        # Print summary (outside Live context)
+        ui.print_summary(data, "List Add Session")
 
     finally:
         await ctx.close()
