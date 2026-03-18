@@ -1,0 +1,34 @@
+{
+  "data": {
+    "user": {
+      "result": {
+        "timeline": {
+          "timeline": {
+            "instructions": [
+              {
+                "type": "TimelineAddEntries",
+                "entries": [
+                  {
+                    "content": {
+                      "itemContent": {
+                        "user_results": {
+                          "result": {
+                            "rest_id": "789012",
+                            "core": {
+                              "screen_name": "bob",
+                              "name": "Bob Example"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

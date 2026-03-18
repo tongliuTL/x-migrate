@@ -1,8 +1,10 @@
+import asyncio
 import os
 import typer
 from typing import Optional
 
 from x_migrate import config as cfg
+from x_migrate.extract import run_extract
 
 app = typer.Typer(help="Migrate X (Twitter) lists and follows between accounts.")
 
@@ -46,9 +48,7 @@ def extract(
     account: Optional[str] = typer.Option(None, help="X account handle"),
 ):
     """Extract members from an X list or following list."""
-    cfg.load()
-    print("not implemented yet")
-    raise SystemExit(0)
+    asyncio.run(run_extract(source, url, account))
 
 
 @app.command()

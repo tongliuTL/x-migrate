@@ -1,0 +1,33 @@
+{
+  "data": {
+    "list": {
+      "members_timeline": {
+        "timeline": {
+          "instructions": [
+            {
+              "type": "TimelineAddEntries",
+              "entries": [
+                {
+                  "content": {
+                    "itemContent": {
+                      "itemType": "TimelineUser",
+                      "user_results": {
+                        "result": {
+                          "rest_id": "123456",
+                          "core": {
+                            "screen_name": "alice",
+                            "name": "Alice Example"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
