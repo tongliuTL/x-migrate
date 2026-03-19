@@ -22,10 +22,12 @@ playwright install chromium
 
 ## Quick Start
 
+> **Tip:** All commands support the short alias `xm` — use it instead of `x-migrate` to save typing.
+
 ### 1. Run setup wizard (first time only)
 
 ```bash
-x-migrate setup
+xm setup
 ```
 
 This creates `~/.x-migrate/config.toml` with your source and destination Chrome profile paths and daily follow limit.
@@ -33,13 +35,13 @@ This creates `~/.x-migrate/config.toml` with your source and destination Chrome 
 ### 2. Extract members from an X list
 
 ```bash
-x-migrate extract --source list --url "https://x.com/i/lists/YOUR_LIST_ID/members"
+xm extract --source list --url "https://x.com/i/lists/YOUR_LIST_ID/members"
 ```
 
 Or extract from someone's following list:
 
 ```bash
-x-migrate extract --source following --account "@handle"
+xm extract --source following --account "@handle"
 ```
 
 ### 3. Follow those members from your destination account
@@ -47,31 +49,31 @@ x-migrate extract --source following --account "@handle"
 Follow up to 20 members (default):
 
 ```bash
-x-migrate follow
+xm follow
 ```
 
 Increase the limit:
 
 ```bash
-x-migrate follow --limit 50
+xm follow --limit 50
 ```
 
 Preview who would be followed without launching the browser:
 
 ```bash
-x-migrate follow --dry-run
+xm follow --dry-run
 ```
 
 ### 4. Add to a list instead of following
 
 ```bash
-x-migrate list-add --list-name "My List Name"
+xm list-add --list-name "My List Name"
 ```
 
 ### 5. Check progress
 
 ```bash
-x-migrate report
+xm report
 ```
 
 Shows your following/members counts and migration progress.
@@ -130,10 +132,10 @@ Pre-releases (e.g. `v0.2.0-beta.1`) are automatically marked as pre-release on G
 
 ## Commands
 
-All commands work with both `x-migrate` and the shorter alias `xm`:
-
 - `xm setup` — Create or update configuration
 - `xm extract` — Extract members from a list or following list
 - `xm follow` — Follow extracted members on destination account
 - `xm list-add` — Add extracted members to a list
 - `xm report` — Show progress and statistics
+
+> All commands also work as `x-migrate <command>` if you prefer the full name.
