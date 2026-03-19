@@ -114,6 +114,20 @@ Run tests:
 pytest
 ```
 
+## Releasing a new version
+
+1. Update `version` in `pyproject.toml`
+2. Add a `## [X.Y.Z] — YYYY-MM-DD` section to `CHANGELOG.md`
+3. Commit: `git commit -m "Release vX.Y.Z"`
+4. Tag and push:
+   ```bash
+   git tag vX.Y.Z
+   git push && git push --tags
+   ```
+5. GitHub Actions runs tests, builds the wheel, and publishes a GitHub Release automatically.
+
+Pre-releases (e.g. `v0.2.0-beta.1`) are automatically marked as pre-release on GitHub.
+
 ## Commands
 
 - `x-migrate setup` — Create or update configuration
