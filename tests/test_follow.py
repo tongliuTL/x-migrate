@@ -1,20 +1,15 @@
 """Tests for the follow module."""
 
-import sys
-import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-
-# Ensure src is on the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from x_migrate.follow import (
     classify_buttons,
     human_delay,
     follow_user,
     run_follow,
-    FINAL_STATUSES,
 )
+from x_migrate.progress import FINAL_STATUSES
 
 
 # T4: test_classify_buttons_all_states

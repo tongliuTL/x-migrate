@@ -88,7 +88,7 @@ Configuration is stored in `~/.x-migrate/config.toml`:
 source_profile = "/path/to/source/profile"
 dest_profile = "/path/to/dest/profile"
 daily_limit = 20
-active_job = "list_name_or_url"
+active_job = "a1b2c3d4e5f6"  # auto-set by extract
 ```
 
 ## Data Storage

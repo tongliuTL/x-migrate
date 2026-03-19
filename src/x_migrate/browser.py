@@ -1,7 +1,7 @@
 """Browser module for launching persistent Chrome contexts with Playwright."""
 
 from pathlib import Path
-from playwright.async_api import async_playwright, BrowserContext
+from playwright.async_api import async_playwright
 
 CHROME_ARGS = ["--disable-blink-features=AutomationControlled"]
 
@@ -21,6 +21,7 @@ async def launch_context(profile_path: str) -> tuple:
         await pw.stop()
     """
     Path(profile_path).mkdir(parents=True, exist_ok=True)
+    pw = None
     try:
         pw = await async_playwright().start()
         ctx = await pw.chromium.launch_persistent_context(
@@ -31,6 +32,8 @@ async def launch_context(profile_path: str) -> tuple:
         )
         return pw, ctx
     except Exception as e:
+        if pw:
+            await pw.stop()
         msg = str(e).lower()
         if "chrome" in msg or "executable" in msg or "not found" in msg:
             print(

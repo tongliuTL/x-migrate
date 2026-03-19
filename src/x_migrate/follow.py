@@ -8,9 +8,8 @@ import asyncio
 import random
 
 from x_migrate import browser, config, progress as progress_store, ui
+from x_migrate.progress import FINAL_STATUSES
 from rich.live import Live
-
-FINAL_STATUSES = {"followed", "already_following", "requested", "unavailable"}
 
 
 def classify_buttons(button_texts: list[str]) -> str:
@@ -167,6 +166,10 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
     active_job = cfg.get("active_job", "")
     dest_profile = cfg.get("dest_profile", "")
 
+    if not active_job:
+        print("No extraction found. Run 'x-migrate extract' first.")
+        raise SystemExit(1)
+
     data = progress_store.load(active_job)
     pending = progress_store.pending(data)
 
@@ -221,12 +224,13 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
 
         with Live(progress, console=ui.console, refresh_per_second=4):
             for i, username in enumerate(to_process):
-                progress.update(task_id, advance=1, description=f"@{username}")
+                progress.update(task_id, description=f"@{username}")
 
                 result = await follow_user(page, username)
                 data[username]["status"] = result
                 progress_store.save(active_job, data)
 
+                progress.update(task_id, advance=1)
                 ui.console.print(f"  @{username}: {ui.status_style(result)}")
 
                 if result == "followed":

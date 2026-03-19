@@ -61,6 +61,10 @@ async def run_list_add(list_name: str) -> None:
     active_job = cfg.get("active_job", "")
     dest_profile = cfg.get("dest_profile", "")
 
+    if not active_job:
+        print("No extraction found. Run 'x-migrate extract' first.")
+        raise SystemExit(1)
+
     data = progress_store.load(active_job)
     pending = progress_store.pending(data)
 

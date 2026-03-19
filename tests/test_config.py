@@ -1,16 +1,27 @@
 """Tests for the config module."""
 
-import sys
-import os
 import pytest
 from pathlib import Path
 from unittest.mock import patch
 
-
-# Ensure src is on the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-
 from x_migrate import config
+
+
+def test_save_load_roundtrip(tmp_path):
+    """Config save → load round-trip preserves data."""
+    fake_config = tmp_path / "config.toml"
+
+    with patch.object(config, "config_path", return_value=fake_config):
+        data = {
+            "source_profile": "/tmp/source",
+            "dest_profile": "/tmp/dest",
+            "active_job": "abc123",
+            "daily_limit": 30,
+        }
+        config.save(data)
+        loaded = config.load()
+
+    assert loaded == data
 
 
 def test_load_missing_file(tmp_path):

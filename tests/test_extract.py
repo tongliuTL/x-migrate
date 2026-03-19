@@ -1,12 +1,14 @@
 """Tests for the extract module."""
 
 import json
+import pytest
 from pathlib import Path
 
 from x_migrate.extract import (
     parse_members_from_response,
     parse_following_from_response,
     is_session_expired,
+    run_extract,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -46,3 +48,25 @@ def test_session_expired_url_detection():
     assert is_session_expired("https://x.com/i/flow/login") is True
     assert is_session_expired("https://x.com/i/lists/123") is False
     assert is_session_expired("https://x.com/home") is False
+
+
+# Input validation tests
+async def test_extract_invalid_source():
+    """extract with invalid --source exits with error."""
+    with pytest.raises(SystemExit) as exc:
+        await run_extract("invalid", None, None)
+    assert exc.value.code == 1
+
+
+async def test_extract_list_without_url():
+    """extract --source list without --url exits with error."""
+    with pytest.raises(SystemExit) as exc:
+        await run_extract("list", None, None)
+    assert exc.value.code == 1
+
+
+async def test_extract_following_without_account():
+    """extract --source following without --account exits with error."""
+    with pytest.raises(SystemExit) as exc:
+        await run_extract("following", None, None)
+    assert exc.value.code == 1

@@ -1,12 +1,7 @@
 """Tests for the list_add module."""
 
-import sys
-import os
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-
-# Ensure src is on the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from x_migrate.list_add import add_to_list
 

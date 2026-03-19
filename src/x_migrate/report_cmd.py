@@ -30,6 +30,10 @@ async def run_report() -> None:
     active_job = config.get("active_job", "")
     dest_profile = config.get("dest_profile", "")
 
+    if not active_job:
+        print("No extraction found. Run 'x-migrate extract' first.")
+        raise SystemExit(1)
+
     data = progress_store.load(active_job)
     all_usernames = list(data.keys())
 
@@ -40,11 +44,11 @@ async def run_report() -> None:
     following_names: set[str] = set()
 
     async def handle_response(response):
-        if response.status != 200:
-            return
-        if "Following" not in response.url and "following" not in response.url:
-            return
         try:
+            if response.status != 200:
+                return
+            if "Following" not in response.url and "following" not in response.url:
+                return
             resp_data = await response.json()
             new_entries = parse_following_from_response(resp_data)
             for username in new_entries:

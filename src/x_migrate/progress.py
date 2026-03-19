@@ -9,7 +9,7 @@ import hashlib
 import json
 
 
-FINAL_STATUSES = {"followed", "already_following", "requested", "unavailable"}
+FINAL_STATUSES = {"followed", "already_following", "requested", "unavailable", "added_to_list"}
 
 
 def job_id(source_arg: str) -> str:

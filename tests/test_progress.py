@@ -1,12 +1,7 @@
 """Tests for the progress module."""
 
-import sys
-import os
 import pytest
 from pathlib import Path
-
-# Ensure src is on the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from x_migrate import progress
 

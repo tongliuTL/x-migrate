@@ -70,8 +70,8 @@ def parse_following_from_response(data: dict) -> dict:
                 core = user_result.get("core", {})
                 screen_name = core.get("screen_name")
                 if screen_name:
-                    result[screen_name.lower()] = {
-                        "username": screen_name.lower(),
+                    result[screen_name] = {
+                        "username": screen_name,
                         "name": core.get("name", ""),
                         "id": user_result.get("rest_id", ""),
                         "status": "pending",
@@ -88,12 +88,22 @@ def is_session_expired(url: str) -> bool:
 
 async def run_extract(source: str, url: str | None, account: str | None) -> None:
     """Run the extract workflow for a list or following page."""
+    if source not in ("list", "following"):
+        print(f"Invalid source '{source}'. Must be 'list' or 'following'.")
+        raise SystemExit(1)
+
     # Determine source_arg and navigation URL
     if source == "list":
+        if not url:
+            print("--url is required when --source is 'list'.")
+            raise SystemExit(1)
         source_arg = url
         nav_url = url
     else:
-        handle = account.lstrip("@") if account else ""
+        if not account:
+            print("--account is required when --source is 'following'.")
+            raise SystemExit(1)
+        handle = account.lstrip("@")
         source_arg = f"@{handle}"
         nav_url = f"https://x.com/{handle}/following"
 
