@@ -7,9 +7,21 @@ Format: {username: {status: str, name: str, id: str}}
 from pathlib import Path
 import hashlib
 import json
+import os
+import re
+import tempfile
 
 
 FINAL_STATUSES = {"followed", "already_following", "requested", "unavailable", "added_to_list"}
+
+# Job IDs must be lowercase hex (output of sha256[:12])
+_VALID_JOB_RE = re.compile(r"^[0-9a-f]{1,64}$")
+
+
+def _validate_job(job: str) -> None:
+    """Ensure job ID is safe for use as a filename (hex only)."""
+    if not _VALID_JOB_RE.match(job):
+        raise ValueError(f"Invalid job ID: {job!r}")
 
 
 def job_id(source_arg: str) -> str:
@@ -19,27 +31,44 @@ def job_id(source_arg: str) -> str:
 
 def progress_path(job: str) -> Path:
     """Return path to the progress file for a given job ID."""
+    _validate_job(job)
     return Path.home() / ".x-migrate" / "progress" / f"{job}.json"
 
 
 def load(job: str) -> dict:
     """
-    Load progress for a job. Returns {} if file doesn't exist.
+    Load progress for a job. Returns {} if file doesn't exist or is corrupted.
     Format: {username: {status: str, name: str, id: str}}
     """
     path = progress_path(job)
     if not path.exists():
         return {}
-    with path.open() as f:
-        return json.load(f)
+    try:
+        with path.open() as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return {}
+        return data
+    except (json.JSONDecodeError, OSError):
+        return {}
 
 
 def save(job: str, data: dict) -> None:
-    """Save progress dict to ~/.x-migrate/progress/{job}.json"""
+    """Save progress dict atomically to ~/.x-migrate/progress/{job}.json"""
     path = progress_path(job)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w") as f:
-        json.dump(data, f, indent=2)
+    # Atomic write: write to temp file then rename
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def pending(data: dict) -> list[str]:

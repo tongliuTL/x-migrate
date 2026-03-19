@@ -14,7 +14,7 @@ def patch_home(tmp_path, monkeypatch):
 
 def test_save_load_roundtrip():
     """T5: Create a progress dict, save it, reload it, assert equality."""
-    job = "test_job_123"
+    job = "abcdef123456"
     data = {
         "user1": {"status": "followed", "name": "User One", "id": "111"},
         "user2": {"status": "error", "name": "User Two", "id": "222"},
@@ -28,7 +28,7 @@ def test_save_load_roundtrip():
 
 def test_load_missing_file():
     """T6: Calling load() on nonexistent job returns {} (not an error)."""
-    result = progress.load("nonexistent_job_id")
+    result = progress.load("000000000000")
     assert result == {}
 
 
@@ -74,3 +74,34 @@ def test_summary():
     result = progress.summary(data)
 
     assert result == {"followed": 2, "error": 1}
+
+
+def test_invalid_job_id_rejected():
+    """Path traversal job IDs are rejected."""
+    with pytest.raises(ValueError, match="Invalid job ID"):
+        progress.progress_path("../../etc/passwd")
+
+
+def test_invalid_job_id_slash():
+    """Job IDs with slashes are rejected."""
+    with pytest.raises(ValueError, match="Invalid job ID"):
+        progress.progress_path("abc/def")
+
+
+def test_load_corrupted_json(tmp_path, monkeypatch):
+    """Corrupted JSON returns {} instead of crashing."""
+    path = progress.progress_path("abcdef123456")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("not valid json {{{")
+
+    result = progress.load("abcdef123456")
+    assert result == {}
+
+
+def test_atomic_save_creates_file():
+    """Verify atomic save creates the file."""
+    job = "aabbccddee11"
+    data = {"user1": {"status": "pending", "name": "Test", "id": "1"}}
+    progress.save(job, data)
+    loaded = progress.load(job)
+    assert loaded == data

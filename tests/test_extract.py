@@ -9,6 +9,8 @@ from x_migrate.extract import (
     parse_following_from_response,
     is_session_expired,
     run_extract,
+    _validate_x_url,
+    _sanitize_handle,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -70,3 +72,46 @@ async def test_extract_following_without_account():
     with pytest.raises(SystemExit) as exc:
         await run_extract("following", None, None)
     assert exc.value.code == 1
+
+
+# URL validation tests
+def test_validate_x_url_valid():
+    """Valid x.com URL passes validation."""
+    _validate_x_url("https://x.com/i/lists/123/members")  # should not raise
+
+
+def test_validate_x_url_rejects_file():
+    """file:// URLs are rejected."""
+    with pytest.raises(SystemExit, match="must be an https://x.com/"):
+        _validate_x_url("file:///etc/passwd")
+
+
+def test_validate_x_url_rejects_javascript():
+    """javascript: URLs are rejected."""
+    with pytest.raises(SystemExit, match="must be an https://x.com/"):
+        _validate_x_url("javascript:alert(1)")
+
+
+def test_validate_x_url_rejects_other_domain():
+    """Non-x.com URLs are rejected."""
+    with pytest.raises(SystemExit, match="must be an https://x.com/"):
+        _validate_x_url("https://evil.com/x.com/lists")
+
+
+# Handle sanitization tests
+def test_sanitize_handle_valid():
+    """Valid handle passes sanitization."""
+    assert _sanitize_handle("@alice_123") == "alice_123"
+    assert _sanitize_handle("bob") == "bob"
+
+
+def test_sanitize_handle_rejects_slashes():
+    """Handles with slashes are rejected."""
+    with pytest.raises(SystemExit, match="invalid X handle"):
+        _sanitize_handle("alice/../../etc")
+
+
+def test_sanitize_handle_rejects_empty():
+    """Empty handles are rejected."""
+    with pytest.raises(SystemExit, match="invalid X handle"):
+        _sanitize_handle("@")

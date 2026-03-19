@@ -6,6 +6,9 @@ dist/
 build/
 .eggs/
 
+# macOS
+.DS_Store
+
 # Virtual environments
 venv/
 .venv/
@@ -17,6 +20,9 @@ profile_dest/
 
 # Runtime data (personal, not for repo)
 data/
+
+# Test caches
+.pytest_cache/
 
 # IDE
 .idea/

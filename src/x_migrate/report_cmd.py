@@ -69,7 +69,7 @@ async def run_report() -> None:
         # Auto-detect logged-in handle
         try:
             href = await page.locator('a[data-testid="AppTabBar_Profile_Link"]').get_attribute("href", timeout=5000)
-            handle = href.strip("/")
+            handle = href.rstrip("/").rsplit("/", 1)[-1]
             print(f"\nDetected account: @{handle}")
         except Exception:
             handle = input("Could not detect username. Enter it manually: ").strip("@")

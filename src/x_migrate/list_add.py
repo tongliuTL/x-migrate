@@ -8,6 +8,7 @@ import asyncio
 import random
 
 from x_migrate import browser, config, progress as progress_store, ui
+from x_migrate.follow import human_delay
 from rich.live import Live
 
 
@@ -114,6 +115,10 @@ async def run_list_add(list_name: str) -> None:
                     ui.console.print(f"  @{username}: {ui.status_style('list_add_failed')}")
 
                 progress_store.save(active_job, data)
+
+                # Human-like delay between users
+                if i < total - 1:
+                    await asyncio.sleep(human_delay())
 
         # Print summary (outside Live context)
         ui.print_summary(data, "List Add Session")

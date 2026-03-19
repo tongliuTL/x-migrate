@@ -4,8 +4,25 @@ Intercepts GraphQL responses from X to collect list members or following data.
 """
 
 import asyncio
+import re
 
 from x_migrate import browser, config as cfg, progress
+
+
+# Usernames: 1-15 alphanumeric or underscore
+_VALID_USERNAME_RE = re.compile(r"^[A-Za-z0-9_]{1,15}$")
+
+def _validate_x_url(url: str) -> None:
+    """Ensure URL is an https://x.com/ URL (not file://, javascript:, etc.)."""
+    if not url.startswith("https://x.com/"):
+        raise SystemExit("Error: --url must be an https://x.com/ URL.")
+
+def _sanitize_handle(handle: str) -> str:
+    """Validate and return a clean X handle (no @, alphanumeric + underscore)."""
+    clean = handle.lstrip("@")
+    if not _VALID_USERNAME_RE.match(clean):
+        raise SystemExit(f"Error: invalid X handle '{handle}'.")
+    return clean
 
 
 def parse_members_from_response(data: dict) -> dict:
@@ -38,8 +55,8 @@ def parse_members_from_response(data: dict) -> dict:
                         "id": user_result.get("rest_id", ""),
                         "status": "pending",
                     }
-    except Exception:
-        pass
+    except (KeyError, TypeError, AttributeError):
+        pass  # Unexpected response structure — skip silently
     return result
 
 
@@ -76,8 +93,8 @@ def parse_following_from_response(data: dict) -> dict:
                         "id": user_result.get("rest_id", ""),
                         "status": "pending",
                     }
-    except Exception:
-        pass
+    except (KeyError, TypeError, AttributeError):
+        pass  # Unexpected response structure — skip silently
     return result
 
 
@@ -97,13 +114,14 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
         if not url:
             print("--url is required when --source is 'list'.")
             raise SystemExit(1)
+        _validate_x_url(url)
         source_arg = url
         nav_url = url
     else:
         if not account:
             print("--account is required when --source is 'following'.")
             raise SystemExit(1)
-        handle = account.lstrip("@")
+        handle = _sanitize_handle(account)
         source_arg = f"@{handle}"
         nav_url = f"https://x.com/{handle}/following"
 

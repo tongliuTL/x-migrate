@@ -203,7 +203,7 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
         # Detect logged-in handle
         try:
             href = await page.locator('a[data-testid="AppTabBar_Profile_Link"]').get_attribute("href", timeout=5000)
-            handle = href.strip("/")
+            handle = href.rstrip("/").rsplit("/", 1)[-1]
         except Exception:
             handle = input("Could not detect handle. Enter your dest account @handle: ").strip("@")
 
