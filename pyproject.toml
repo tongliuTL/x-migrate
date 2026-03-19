@@ -26,6 +26,7 @@ testpaths = ["tests"]
 
 [project.scripts]
 x-migrate = "x_migrate.cli:app"
+xm = "x_migrate.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/x_migrate"]

@@ -9,6 +9,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ## [0.1.0] — 2026-03-18
 
 ### Added
+- `xm` short alias — `xm` works everywhere `x-migrate` does (e.g. `xm follow`, `xm extract`)
 - `x-migrate setup` — interactive wizard to create `~/.x-migrate/config.toml`
 - `x-migrate extract` — intercepts X GraphQL responses to collect members from a list or following page
 - `x-migrate follow` — follows extracted members from destination account with `--limit` and `--dry-run`

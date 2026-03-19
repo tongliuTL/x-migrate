@@ -130,8 +130,10 @@ Pre-releases (e.g. `v0.2.0-beta.1`) are automatically marked as pre-release on G
 
 ## Commands
 
-- `x-migrate setup` — Create or update configuration
-- `x-migrate extract` — Extract members from a list or following list
-- `x-migrate follow` — Follow extracted members on destination account
-- `x-migrate list-add` — Add extracted members to a list
-- `x-migrate report` — Show progress and statistics
+All commands work with both `x-migrate` and the shorter alias `xm`:
+
+- `xm setup` — Create or update configuration
+- `xm extract` — Extract members from a list or following list
+- `xm follow` — Follow extracted members on destination account
+- `xm list-add` — Add extracted members to a list
+- `xm report` — Show progress and statistics
