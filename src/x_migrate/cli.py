@@ -56,10 +56,15 @@ def extract(
 
 @app.command()
 def follow(
-    limit: int = typer.Option(20, help="Maximum number of accounts to follow"),
+    limit: int = typer.Option(None, help="Maximum follows (default: daily_limit from config, or 20)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Simulate without making changes"),
 ):
     """Follow accounts from extracted list."""
+    if limit is None:
+        try:
+            limit = cfg.load().get("daily_limit", 20)
+        except SystemExit:
+            limit = 20
     asyncio.run(run_follow(limit=limit, dry_run=dry_run))
 
 
