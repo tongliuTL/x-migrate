@@ -1,8 +1,11 @@
 # x-migrate
 
+[![PyPI version](https://img.shields.io/pypi/v/x-migrate)](https://pypi.org/project/x-migrate/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Migrate X (Twitter) lists and follows between accounts.
 
-**Note:** This is a personal tool for migrating X (Twitter) accounts. It helps you extract members from an X list or following list and then follow or add those members to a list on your destination account.
+Extract members from any X list or following page, then follow them or add them to a list on your destination account — with rate-limit detection, progress tracking, and a Rich TUI.
 
 ## Requirements
 
@@ -11,11 +14,18 @@ Migrate X (Twitter) lists and follows between accounts.
 
 ## Installation
 
+### From PyPI (recommended)
+
+```bash
+pip install x-migrate
+playwright install chromium
+```
+
+### From source
+
 ```bash
 git clone https://github.com/tongliuTL/x-migrate
 cd x-migrate
-python3 -m venv venv
-source venv/bin/activate
 pip install -e .
 playwright install chromium
 ```
@@ -89,7 +99,7 @@ Configuration is stored in `~/.x-migrate/config.toml`:
 ```toml
 source_profile = "/path/to/source/profile"
 dest_profile = "/path/to/dest/profile"
-daily_limit = 20
+daily_limit = 20    # default for --limit when not specified
 active_job = "a1b2c3d4e5f6"  # auto-set by extract
 ```
 
@@ -126,7 +136,7 @@ pytest
    git tag vX.Y.Z
    git push && git push --tags
    ```
-5. GitHub Actions runs tests, builds the wheel, and publishes a GitHub Release automatically.
+5. GitHub Actions runs tests, builds the wheel, publishes a GitHub Release, and pushes to PyPI automatically.
 
 Pre-releases (e.g. `v0.2.0-beta.1`) are automatically marked as pre-release on GitHub.
 

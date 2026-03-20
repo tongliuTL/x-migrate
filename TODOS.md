@@ -21,13 +21,13 @@ the codebase if only one implementation ever exists.
 The Protocol stubs would be ~10 lines total — `SourceAdapter.extract() -> list[Member]`
 and `DestinationAdapter.apply(member) -> str`. The X adapter is the sole implementation.
 
-**Depends on:** v1 shipping.
+**Depends on:** Nothing — v1 has shipped.
 
 ---
 
 ### Self-Healing GraphQL Schema Detection
 
-**What:** On a 0-members result from `x-migrate extract`, print the most recent
+**What:** On a 0-members result from `xm extract`, print the most recent
 intercepted response URLs to help identify if X renamed the endpoint.
 
 **Why:** X has renamed GraphQL endpoints before. Today a URL change silently returns
@@ -41,7 +41,7 @@ before output/logging.
 
 **Context:** Current behavior: `extract.py` prints `[ListMembers: +0 users, total: 0]`.
 The fix adds a small URL log buffer in `extract.py` that's dumped on 0-members exit.
-Companion: add a `--debug-responses` flag to `x-migrate extract` that writes all
+Companion: add a `--debug-responses` flag to `xm extract` that writes all
 intercepted URLs to `~/.x-migrate/debug-{datetime}.log`.
 
-**Depends on:** v1 shipping.
+**Depends on:** Nothing — v1 has shipped.
