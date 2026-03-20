@@ -19,4 +19,4 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Unified progress store at `~/.x-migrate/progress/{job-id}.json`
 - `active_job` tracking in config — `extract` sets it, other commands read it
 - Human-like random delays and rate-limit detection/stop
-- 24 tests covering all core logic (no browser required)
+- 50 tests covering all core logic (no browser required)
