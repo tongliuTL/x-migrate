@@ -5,14 +5,34 @@ build-backend = "hatchling.build"
 [project]
 name = "x-migrate"
 version = "0.1.0"
-description = "Migrate X (Twitter) lists between accounts"
+description = "Migrate X (Twitter) lists and follows between accounts"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [{name = "Tong Liu"}]
 requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Utilities",
+]
 dependencies = [
     "playwright>=1.40",
     "typer>=0.9",
     "rich>=13",
     "tomli-w>=1.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/tongliuTL/x-migrate"
+Repository = "https://github.com/tongliuTL/x-migrate"
+Issues = "https://github.com/tongliuTL/x-migrate/issues"
+Changelog = "https://github.com/tongliuTL/x-migrate/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
