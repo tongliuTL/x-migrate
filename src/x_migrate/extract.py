@@ -37,12 +37,15 @@ def parse_members_from_response(data: dict) -> dict:
                 .get("timeline", {})
                 .get("instructions", [])
         )
-        if not isinstance(instructions, list):
-            return result
-        for instruction in instructions:
-            if instruction.get("type") != "TimelineAddEntries":
-                continue
-            for entry in instruction.get("entries", []):
+    except (AttributeError, TypeError):
+        return result
+    if not isinstance(instructions, list):
+        return result
+    for instruction in instructions:
+        if instruction.get("type") != "TimelineAddEntries":
+            continue
+        for entry in instruction.get("entries", []):
+            try:
                 item = entry.get("content", {}).get("itemContent", {})
                 if item.get("itemType") != "TimelineUser":
                     continue
@@ -56,8 +59,8 @@ def parse_members_from_response(data: dict) -> dict:
                         "id": user_result.get("rest_id", ""),
                         "status": "pending",
                     }
-    except (KeyError, TypeError, AttributeError):
-        pass  # Unexpected response structure — skip silently
+            except (KeyError, TypeError, AttributeError):
+                pass  # Skip malformed entries without aborting the page
     return result
 
 
@@ -73,12 +76,15 @@ def parse_following_from_response(data: dict) -> dict:
                 .get("timeline", {})
                 .get("instructions", [])
         )
-        if not isinstance(instructions, list):
-            return result
-        for instruction in instructions:
-            if instruction.get("type") != "TimelineAddEntries":
-                continue
-            for entry in instruction.get("entries", []):
+    except (AttributeError, TypeError):
+        return result
+    if not isinstance(instructions, list):
+        return result
+    for instruction in instructions:
+        if instruction.get("type") != "TimelineAddEntries":
+            continue
+        for entry in instruction.get("entries", []):
+            try:
                 user_result = (
                     entry.get("content", {})
                          .get("itemContent", {})
@@ -94,8 +100,8 @@ def parse_following_from_response(data: dict) -> dict:
                         "id": user_result.get("rest_id", ""),
                         "status": "pending",
                     }
-    except (KeyError, TypeError, AttributeError):
-        pass  # Unexpected response structure — skip silently
+            except (KeyError, TypeError, AttributeError):
+                pass  # Skip malformed entries without aborting the page
     return result
 
 

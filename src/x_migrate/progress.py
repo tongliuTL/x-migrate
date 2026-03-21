@@ -57,7 +57,6 @@ def save(job: str, data: dict) -> None:
     """Save progress dict atomically to ~/.x-migrate/progress/{job}.json"""
     path = progress_path(job)
     path.parent.mkdir(parents=True, exist_ok=True)
-    # Atomic write: write to temp file then rename
     fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
     try:
         with os.fdopen(fd, "w") as f:

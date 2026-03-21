@@ -73,7 +73,6 @@ async def run_list_add(list_name: str) -> None:
         print("All members already processed!")
         return
 
-    # Launch browser
     pw, ctx = await browser.launch_context(dest_profile)
     page = await ctx.new_page()
 
@@ -116,7 +115,6 @@ async def run_list_add(list_name: str) -> None:
 
                 progress_store.save(active_job, data)
 
-                # Human-like delay between users
                 if i < total - 1:
                     await asyncio.sleep(human_delay())
 

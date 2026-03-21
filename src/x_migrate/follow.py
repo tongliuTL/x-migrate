@@ -184,7 +184,6 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
             print(f"  @{username}")
         return
 
-    # Launch browser
     pw, ctx = await browser.launch_context(dest_profile)
     page = await ctx.new_page()
 
@@ -214,7 +213,6 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
 
         to_process = pending[:limit]
         total = len(to_process)
-        followed_this_run = 0
 
         print(f"\nProcessing {total} members (session limit: {limit} follows)...")
         print("Do not interact with the browser while this runs.\n")
@@ -223,7 +221,7 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
         task_id = progress.add_task("Following...", total=total)
 
         with Live(progress, console=ui.console, refresh_per_second=4):
-            for i, username in enumerate(to_process):
+            for username in to_process:
                 progress.update(task_id, description=f"@{username}")
 
                 result = await follow_user(page, username)
@@ -233,17 +231,8 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
                 progress.update(task_id, advance=1)
                 ui.console.print(f"  @{username}: {ui.status_style(result)}")
 
-                if result == "followed":
-                    followed_this_run += 1
-                elif result == "requested":
-                    followed_this_run += 1
-                elif result == "rate_limited":
+                if result == "rate_limited":
                     ui.console.print("\n  [bold red]X has throttled this account. Stopping now to protect it.[/bold red]")
-                    ui.console.print("  Re-run tomorrow. All progress is saved.\n")
-                    break
-
-                if followed_this_run >= limit:
-                    ui.console.print(f"\n  [Session limit of {limit} follows reached. Stopping for today.]")
                     ui.console.print("  Re-run tomorrow. All progress is saved.\n")
                     break
 

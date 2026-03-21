@@ -3,6 +3,8 @@
 Provides progress bar, live status updates, and summary table display.
 """
 
+from collections import Counter
+
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 from rich.table import Table
@@ -27,7 +29,6 @@ def print_summary(progress_data: dict, title: str = "Session Summary") -> None:
 
     progress_data format: {username: {status: str, name: str, id: str}}
     """
-    from collections import Counter
     counts = Counter(d.get("status", "unknown") for d in progress_data.values())
 
     table = Table(title=title, show_header=True, header_style="bold cyan")

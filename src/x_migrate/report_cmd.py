@@ -65,7 +65,6 @@ async def run_report(verify: bool = False) -> None:
         print("No progress data found for active job.")
         raise SystemExit(1)
 
-    # Default: local report
     if not verify:
         _print_local_report(data)
         print("  Tip: run 'xm report --verify' to cross-check against your live following list.\n")
