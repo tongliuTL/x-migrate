@@ -6,7 +6,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [0.1.1] — 2026-03-21
 
 ### Fixed
 - `xm extract --source list` now navigates to the `/members` tab instead of the list timeline (posts). URLs without `/members` suffix are auto-corrected.
@@ -16,10 +16,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Changed
 - `xm report` now reads the local progress file by default (no browser needed). Use `xm report --verify` for the previous behavior of scraping the live following list.
 
-### Tests
-- 53 tests (up from 50), 59% code coverage
-- Added test for list URL → members tab navigation
-- Added tests for local report output and empty data handling
+### Test Coverage
+- 53 tests (up from 50), 59% overall code coverage
+
+| Module | Stmts | Cover |
+|--------|-------|-------|
+| config.py | 21 | 100% |
+| ui.py | 21 | 100% |
+| browser.py | 18 | 89% |
+| progress.py | 50 | 86% |
+| extract.py | 142 | 75% |
+| cli.py | 46 | 52% |
+| follow.py | 147 | 50% |
+| report_cmd.py | 103 | 40% |
+| list_add.py | 82 | 32% |
+| **Total** | **630** | **59%** |
 
 ---
 
