@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- `xm extract --source list` now navigates to the `/members` tab instead of the list timeline (posts). URLs without `/members` suffix are auto-corrected.
+- Extract scrolling: replaced `mouse.wheel` with JS-based scrolling targeting X's primary column container, fixing infinite-scroll loading for large lists.
+- Extract response interception: switched from `page.on("response")` to route-based interception (`page.route`) to eliminate `Protocol error (Network.getResponseBody)` errors caused by Chromium discarding response bodies.
+
+### Changed
+- `xm report` now reads the local progress file by default (no browser needed). Use `xm report --verify` for the previous behavior of scraping the live following list.
+
+### Tests
+- 53 tests (up from 50), 59% code coverage
+- Added test for list URL → members tab navigation
+- Added tests for local report output and empty data handling
+
+---
+
 ## [0.1.0] — 2026-03-18
 
 ### Added

@@ -45,8 +45,10 @@ This creates `~/.x-migrate/config.toml` with your source and destination Chrome 
 ### 2. Extract members from an X list
 
 ```bash
-xm extract --source list --url "https://x.com/i/lists/YOUR_LIST_ID/members"
+xm extract --source list --url "https://x.com/i/lists/YOUR_LIST_ID"
 ```
+
+> The `/members` suffix is added automatically if omitted.
 
 Or extract from someone's following list:
 
@@ -86,7 +88,11 @@ xm list-add --list-name "My List Name"
 xm report
 ```
 
-Shows your following/members counts and migration progress.
+Shows migration progress from local data (no browser needed). To cross-check against your live following list:
+
+```bash
+xm report --verify
+```
 
 ## Rate Limits
 
@@ -146,6 +152,6 @@ Pre-releases (e.g. `v0.2.0-beta.1`) are automatically marked as pre-release on G
 - `xm extract` — Extract members from a list or following list
 - `xm follow` — Follow extracted members on destination account
 - `xm list-add` — Add extracted members to a list
-- `xm report` — Show progress and statistics
+- `xm report` — Show progress from local data; add `--verify` to scrape live following list
 
 > All commands also work as `x-migrate <command>` if you prefer the full name.

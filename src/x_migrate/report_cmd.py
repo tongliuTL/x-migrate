@@ -1,7 +1,7 @@
 """Report module for x-migrate.
 
-Fetches the destination account's following list, compares against
-the members in the active job's progress store, and prints a report.
+Shows migration progress from the local progress store. Optionally
+scrapes the destination account's following list for online verification.
 """
 
 import asyncio
@@ -10,34 +10,71 @@ from x_migrate import browser, config as cfg, progress as progress_store
 from x_migrate.extract import parse_following_from_response
 
 
-async def run_report() -> None:
+def _print_local_report(data: dict) -> None:
+    """Print a report based on local progress data only."""
+    total = len(data)
+    counts = progress_store.summary(data)
+    pending = counts.get("pending", 0)
+    followed = counts.get("followed", 0)
+    already = counts.get("already_following", 0)
+    requested = counts.get("requested", 0)
+    unavailable = counts.get("unavailable", 0)
+    rate_limited = counts.get("rate_limited", 0)
+    error = counts.get("error", 0)
+    added_to_list = counts.get("added_to_list", 0)
+
+    done = followed + already + requested + added_to_list
+
+    print(f"\n{'=' * 60}")
+    print(f"  Total members       : {total}")
+    print(f"  Done                : {done}")
+    print(f"    Followed          : {followed}")
+    print(f"    Already following : {already}")
+    print(f"    Requested         : {requested}")
+    if added_to_list:
+        print(f"    Added to list     : {added_to_list}")
+    print(f"  Pending             : {pending}")
+    if rate_limited:
+        print(f"  Rate limited        : {rate_limited}")
+    if unavailable:
+        print(f"  Unavailable         : {unavailable}")
+    if error:
+        print(f"  Errors (will retry) : {error}")
+    print(f"{'=' * 60}")
+
+    pct = (done / total * 100) if total else 0
+    print(f"  Progress: {done}/{total} ({pct:.1f}%)\n")
+
+
+async def run_report(verify: bool = False) -> None:
     """Run the report workflow.
 
-    Steps:
-    1. Load config, get active_job
-    2. Load progress to get the members list (keys of the progress dict)
-    3. Launch browser (dest profile)
-    4. Navigate to x.com/home, prompt for login + Enter
-    5. Auto-detect @handle from profile link
-    6. Navigate to x.com/{handle}/following
-    7. Set up intercept handler using parse_following_from_response() from extract.py
-    8. Scroll loop (stall count = 8)
-    9. Close browser
-    10. Compare: members in progress vs following_names collected
-    11. Print report
+    By default, uses the local progress file. With --verify, launches
+    a browser to scrape the destination following list for comparison.
     """
     config = cfg.load()
     active_job = config.get("active_job", "")
-    dest_profile = config.get("dest_profile", "")
 
     if not active_job:
         print("No extraction found. Run 'x-migrate extract' first.")
         raise SystemExit(1)
 
     data = progress_store.load(active_job)
+
+    if not data:
+        print("No progress data found for active job.")
+        raise SystemExit(1)
+
+    # Default: local report
+    if not verify:
+        _print_local_report(data)
+        print("  Tip: run 'xm report --verify' to cross-check against your live following list.\n")
+        return
+
+    # Online verification mode
+    dest_profile = config.get("dest_profile", "")
     all_usernames = list(data.keys())
 
-    # Launch browser
     pw, ctx = await browser.launch_context(dest_profile)
     page = await ctx.new_page()
 
@@ -66,7 +103,6 @@ async def run_report() -> None:
         print("=" * 60)
         input("\n>>> Press Enter when ready: ")
 
-        # Auto-detect logged-in handle
         try:
             href = await page.locator('a[data-testid="AppTabBar_Profile_Link"]').get_attribute("href", timeout=5000)
             handle = href.rstrip("/").rsplit("/", 1)[-1]
@@ -94,7 +130,6 @@ async def run_report() -> None:
         await ctx.close()
         await pw.stop()
 
-    # Compare
     following = [u for u in all_usernames if u.lower() in following_names]
     not_following = [u for u in all_usernames if u.lower() not in following_names]
 

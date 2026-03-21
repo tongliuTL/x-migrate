@@ -4,6 +4,7 @@ Intercepts GraphQL responses from X to collect list members or following data.
 """
 
 import asyncio
+import json
 import re
 
 from x_migrate import browser, config as cfg, progress
@@ -116,7 +117,10 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
             raise SystemExit(1)
         _validate_x_url(url)
         source_arg = url
-        nav_url = url
+        # Ensure we navigate to the members tab, not the list timeline
+        nav_url = url.rstrip("/")
+        if not nav_url.endswith("/members"):
+            nav_url = nav_url + "/members"
     else:
         if not account:
             print("--account is required when --source is 'following'.")
@@ -137,23 +141,19 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
     pw, ctx = await browser.launch_context(profile_path)
     page = await ctx.new_page()
 
-    # Intercept handler
-    async def handle_response(response):
+    # Route-based interception for reliable response body access
+    keyword = "ListMembers" if source == "list" else "Following"
+    parser = parse_members_from_response if source == "list" else parse_following_from_response
+
+    async def intercept_route(route):
         try:
+            response = await route.fetch()
+            body = await response.body()
+            await route.fulfill(response=response)
             if response.status != 200:
                 return
-            resp_url = response.url
-            if source == "list":
-                if "ListMembers" not in resp_url:
-                    return
-                data = await response.json()
-                new_entries = parse_members_from_response(data)
-            else:
-                if "Following" not in resp_url and "following" not in resp_url:
-                    return
-                data = await response.json()
-                new_entries = parse_following_from_response(data)
-
+            data = json.loads(body)
+            new_entries = parser(data)
             before = len(captured)
             for username, entry in new_entries.items():
                 if username not in captured:
@@ -162,9 +162,13 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
             if added > 0:
                 print(f"  [+{added} users, total: {len(captured)}]")
         except Exception as e:
+            try:
+                await route.continue_()
+            except Exception:
+                pass
             print(f"  [intercept error: {e}]")
 
-    page.on("response", handle_response)
+    await page.route(f"**/graphql/**/{keyword}*", intercept_route)
 
     # Navigate to target page
     await page.goto(nav_url)
@@ -186,10 +190,18 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
     stall_count = 0
     last_count = len(captured)
 
+    _SCROLL_JS = """
+        () => {
+            const col = document.querySelector('[data-testid="primaryColumn"]');
+            if (col) col.scrollIntoView(false);
+            window.scrollBy(0, 3000);
+        }
+    """
+
     while stall_count < 15:
-        await page.mouse.wheel(0, 1500)
+        await page.evaluate(_SCROLL_JS)
         await asyncio.sleep(0.5)
-        await page.mouse.wheel(0, 1500)
+        await page.evaluate(_SCROLL_JS)
         await asyncio.sleep(3.5)
 
         if len(captured) == last_count:

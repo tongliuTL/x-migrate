@@ -77,6 +77,8 @@ def list_add(
 
 
 @app.command()
-def report():
-    """Compare following vs members in lists."""
-    asyncio.run(run_report())
+def report(
+    verify: bool = typer.Option(False, "--verify", help="Scrape live following list to cross-check"),
+):
+    """Show migration progress. Use --verify to check against live data."""
+    asyncio.run(run_report(verify=verify))

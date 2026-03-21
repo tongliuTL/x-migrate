@@ -80,6 +80,60 @@ def test_validate_x_url_valid():
     _validate_x_url("https://x.com/i/lists/123/members")  # should not raise
 
 
+def test_extract_list_navigates_to_members_tab(monkeypatch):
+    """extract --source list appends /members to nav URL if missing."""
+    import x_migrate.extract as ext_mod
+
+    navigated_urls = []
+
+    # Stub config, progress, and browser to capture the navigation URL
+    monkeypatch.setattr(ext_mod.cfg, "load", lambda: {"source_profile": "/tmp/fake"})
+    monkeypatch.setattr(ext_mod.cfg, "save", lambda c: None)
+    monkeypatch.setattr(ext_mod.progress, "job_id", lambda s: "abc123")
+    monkeypatch.setattr(ext_mod.progress, "load", lambda j: {})
+    monkeypatch.setattr(ext_mod.progress, "save", lambda j, d: None)
+
+    class FakePage:
+        url = "https://x.com/i/lists/123/members"
+        def on(self, *a, **kw):
+            pass
+        async def route(self, *a, **kw):
+            pass
+        async def evaluate(self, *a, **kw):
+            pass
+        async def goto(self, url, **kw):
+            navigated_urls.append(url)
+
+    class FakeCtx:
+        async def new_page(self):
+            return FakePage()
+        async def close(self):
+            pass
+
+    class FakePw:
+        async def stop(self):
+            pass
+
+    monkeypatch.setattr(ext_mod.browser, "launch_context", lambda p: _async_val((FakePw(), FakeCtx())))
+    monkeypatch.setattr("builtins.input", lambda _: "")
+    monkeypatch.setattr(ext_mod.asyncio, "sleep", _async_noop)
+
+    import asyncio
+    asyncio.run(ext_mod.run_extract("list", "https://x.com/i/lists/123", None))
+
+    # First goto is the initial navigation, second is after "press Enter"
+    assert navigated_urls[0] == "https://x.com/i/lists/123/members"
+    assert navigated_urls[1] == "https://x.com/i/lists/123/members"
+
+
+async def _async_val(val):
+    return val
+
+
+async def _async_noop(*a, **kw):
+    pass
+
+
 def test_validate_x_url_rejects_file():
     """file:// URLs are rejected."""
     with pytest.raises(SystemExit, match="must be an https://x.com/"):
