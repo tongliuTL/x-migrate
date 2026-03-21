@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "x-migrate"
-version = "0.1.1"
+version = "0.1.2"
 description = "Migrate X (Twitter) lists and follows between accounts"
 readme = "README.md"
 license = {file = "LICENSE"}

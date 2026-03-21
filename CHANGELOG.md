@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.2] — 2026-03-21
+
+### Fixed
+- `xm extract` no longer silently drops a full page of results when a single malformed entry is encountered. Previously the try/except wrapped the entire entries loop, so one bad entry aborted all remaining users from that page. Each entry is now handled independently — a malformed entry is skipped, and the rest are still captured.
+
+### Changed
+- Removed a redundant session-limit counter in `xm follow` — the `pending[:limit]` slice already enforces the cap, so the secondary check could never trigger.
+- Moved `Counter` import to module level in `ui.py` (was deferred inside a function body for no reason).
+- Removed several narrating comments that described exactly what the adjacent code already made obvious.
+
+### Test Coverage
+- 53 tests, 59% overall coverage (unchanged — all existing tests continue to pass)
+
+---
+
 ## [0.1.1] — 2026-03-21
 
 ### Fixed
