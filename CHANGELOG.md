@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.1.3] — 2026-03-25
+
+### Changed
+- Extracted `_build_user_record()` helper in `extract.py` — both `parse_members_from_response` and `parse_following_from_response` now share a single source of truth for user record construction.
+- Removed dead `added_count`/`failed_count` counters in `list_add.py` — they were incremented but never read; `ui.print_summary` handles all reporting.
+- Single-pass partition in `report_cmd.py` — `following`/`not_following` split now computes `u.lower()` once per username instead of twice.
+- Added `.coverage` and `htmlcov/` to `.gitignore`.
+- Removed self-evident comments throughout `extract.py`, `follow.py`, and `list_add.py`.
+
+---
+
 ## [0.1.2] — 2026-03-21
 
 ### Fixed
