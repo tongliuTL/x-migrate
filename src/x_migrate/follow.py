@@ -96,6 +96,9 @@ async def follow_user(page, username: str) -> str:
         if state == "already_following":
             return "already_following"
 
+        if state == "requested":
+            return "requested"
+
         if state == "no_button":
             # No follow button after waiting → account unavailable or protected with no button
             return "unavailable"
@@ -113,7 +116,6 @@ async def follow_user(page, username: str) -> str:
         if not clicked:
             return "error"
 
-        # Wait and verify the state changed
         await asyncio.sleep(2.5)
         btns_after = await get_button_texts(page)
         state_after = classify_buttons(btns_after)
@@ -239,7 +241,6 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
                 delay = human_delay()
                 await asyncio.sleep(delay)
 
-        # Print summary (outside Live context)
         ui.print_summary(data, "Follow Session")
 
     finally:

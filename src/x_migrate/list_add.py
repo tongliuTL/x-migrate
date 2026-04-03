@@ -89,8 +89,6 @@ async def run_list_add(list_name: str) -> None:
         await asyncio.sleep(2)
 
         total = len(pending)
-        added_count = 0
-        failed_count = 0
 
         print(f"\nAdding {total} members to '{list_name}'...")
         print("Do not interact with the browser while this runs.\n")
@@ -106,11 +104,9 @@ async def run_list_add(list_name: str) -> None:
 
                 if success:
                     data[username]["status"] = "added_to_list"
-                    added_count += 1
                     ui.console.print(f"  @{username}: {ui.status_style('added_to_list')}")
                 else:
                     data[username]["status"] = "list_add_failed"
-                    failed_count += 1
                     ui.console.print(f"  @{username}: {ui.status_style('list_add_failed')}")
 
                 progress_store.save(active_job, data)
@@ -118,7 +114,6 @@ async def run_list_add(list_name: str) -> None:
                 if i < total - 1:
                     await asyncio.sleep(human_delay())
 
-        # Print summary (outside Live context)
         ui.print_summary(data, "List Add Session")
 
     finally:

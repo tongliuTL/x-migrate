@@ -26,6 +26,15 @@ def _sanitize_handle(handle: str) -> str:
     return clean
 
 
+def _build_user_record(screen_name: str, core: dict, user_result: dict) -> dict:
+    return {
+        "username": screen_name,
+        "name": core.get("name", ""),
+        "id": user_result.get("rest_id", ""),
+        "status": "pending",
+    }
+
+
 def parse_members_from_response(data: dict) -> dict:
     """Parse list members. Returns {username: {status, name, id}}."""
     result = {}
@@ -53,12 +62,7 @@ def parse_members_from_response(data: dict) -> dict:
                 core = user_result.get("core", {})
                 screen_name = core.get("screen_name")
                 if screen_name:
-                    result[screen_name] = {
-                        "username": screen_name,
-                        "name": core.get("name", ""),
-                        "id": user_result.get("rest_id", ""),
-                        "status": "pending",
-                    }
+                    result[screen_name] = _build_user_record(screen_name, core, user_result)
             except (KeyError, TypeError, AttributeError):
                 pass  # Skip malformed entries without aborting the page
     return result
@@ -94,12 +98,7 @@ def parse_following_from_response(data: dict) -> dict:
                 core = user_result.get("core", {})
                 screen_name = core.get("screen_name")
                 if screen_name:
-                    result[screen_name] = {
-                        "username": screen_name,
-                        "name": core.get("name", ""),
-                        "id": user_result.get("rest_id", ""),
-                        "status": "pending",
-                    }
+                    result[screen_name] = _build_user_record(screen_name, core, user_result)
             except (KeyError, TypeError, AttributeError):
                 pass  # Skip malformed entries without aborting the page
     return result
@@ -116,7 +115,6 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
         print(f"Invalid source '{source}'. Must be 'list' or 'following'.")
         raise SystemExit(1)
 
-    # Determine source_arg and navigation URL
     if source == "list":
         if not url:
             print("--url is required when --source is 'list'.")
@@ -135,15 +133,12 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
         source_arg = f"@{handle}"
         nav_url = f"https://x.com/{handle}/following"
 
-    # Load config
     config = cfg.load()
     profile_path = config["source_profile"]
 
-    # Compute job ID and load any existing progress
     job = progress.job_id(source_arg)
     captured: dict = progress.load(job)
 
-    # Launch browser
     pw, ctx = await browser.launch_context(profile_path)
     page = await ctx.new_page()
 
@@ -176,7 +171,6 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
 
     await page.route(f"**/graphql/**/{keyword}*", intercept_route)
 
-    # Navigate to target page
     await page.goto(nav_url)
 
     print("=" * 60)
@@ -221,20 +215,16 @@ async def run_extract(source: str, url: str | None, account: str | None) -> None
 
     print(f"\nDone scrolling. Total entries found: {len(captured)}")
 
-    # Check for session expiry
     if len(captured) == 0 and is_session_expired(page.url):
         print("\nWARNING: Session may have expired. The page redirected to login.")
         print("Re-run after logging in again.")
 
-    # Save progress
     progress.save(job, captured)
     print(f"Progress saved (job: {job})")
 
-    # Update active_job in config
     config["active_job"] = job
     cfg.save(config)
     print(f"Active job set to: {job}")
 
-    # Close browser
     await ctx.close()
     await pw.stop()
