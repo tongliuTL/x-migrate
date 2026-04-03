@@ -23,6 +23,8 @@ data/
 
 # Test caches
 .pytest_cache/
+.coverage
+htmlcov/
 
 # IDE
 .idea/
