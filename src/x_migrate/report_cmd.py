@@ -129,8 +129,9 @@ async def run_report(verify: bool = False) -> None:
         await ctx.close()
         await pw.stop()
 
-    following = [u for u in all_usernames if u.lower() in following_names]
-    not_following = [u for u in all_usernames if u.lower() not in following_names]
+    following, not_following = [], []
+    for u in all_usernames:
+        (following if u.lower() in following_names else not_following).append(u)
 
     print(f"\n{'=' * 60}")
     print(f"  Source list members : {len(all_usernames)}")
