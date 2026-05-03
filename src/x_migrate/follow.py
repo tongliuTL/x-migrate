@@ -6,10 +6,24 @@ X account opened in a Playwright browser session.
 
 import asyncio
 import random
+import re
 
 from x_migrate import browser, config, progress as progress_store, ui
 from x_migrate.progress import FINAL_STATUSES
 from rich.live import Live
+
+
+def parse_backoff(value: str) -> int:
+    """Parse a backoff string like '2h', '90m', '3600s', or '0' into seconds."""
+    value = value.strip().lower()
+    if value in ("0", ""):
+        return 0
+    m = re.fullmatch(r"(\d+(?:\.\d+)?)(h|m|s)?", value)
+    if not m:
+        raise ValueError(f"Cannot parse backoff duration: {value!r}. Use e.g. 2h, 90m, 3600s.")
+    amount, unit = float(m.group(1)), m.group(2) or "s"
+    multipliers = {"h": 3600, "m": 60, "s": 1}
+    return int(amount * multipliers[unit])
 
 
 def classify_buttons(button_texts: list[str]) -> str:
@@ -148,22 +162,10 @@ async def follow_user(page, username: str) -> str:
         return "error"
 
 
-async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
-    """Main runner for the follow workflow.
+async def run_follow(limit: int = 20, dry_run: bool = False, auto: bool = False, backoff: str = "0") -> None:
+    """Main runner for the follow workflow."""
+    backoff_secs = parse_backoff(backoff)
 
-    Steps:
-    1. Load config, get active_job
-    2. Load progress from progress store
-    3. Get pending list — if empty, print "All members already processed!" and return
-    4. If dry_run: print plan (list of @usernames to follow, up to limit), return
-    5. Launch browser (dest profile)
-    6. Navigate to x.com/home
-    7. Prompt for login if needed, then Enter
-    8. Detect @handle from profile link, ask user to confirm
-    9. Process pending members up to limit
-    10. On rate_limited: stop, print message, save progress
-    11. Print summary, close browser
-    """
     cfg = config.load()
     active_job = cfg.get("active_job", "")
     dest_profile = cfg.get("dest_profile", "")
@@ -192,54 +194,93 @@ async def run_follow(limit: int = 20, dry_run: bool = False) -> None:
     try:
         await page.goto("https://x.com/home")
 
-        print("=" * 60)
-        print("A browser window has opened.")
-        print("1. Log into your DESTINATION X account if not already.")
-        print("   (Next time you run this, login will be saved.)")
-        print("2. Come back here and press Enter to start following.")
-        print("=" * 60)
-        input("\n>>> Press Enter when ready: ")
-        await asyncio.sleep(2)
+        if not auto:
+            print("=" * 60)
+            print("A browser window has opened.")
+            print("1. Log into your DESTINATION X account if not already.")
+            print("   (Next time you run this, login will be saved.)")
+            print("2. Come back here and press Enter to start following.")
+            print("=" * 60)
+            input("\n>>> Press Enter when ready: ")
+            await asyncio.sleep(2)
 
         # Detect logged-in handle
         try:
             href = await page.locator('a[data-testid="AppTabBar_Profile_Link"]').get_attribute("href", timeout=5000)
             handle = href.rstrip("/").rsplit("/", 1)[-1]
         except Exception:
+            if auto:
+                print("Could not detect logged-in handle. Run once without --auto to log in first.")
+                raise SystemExit(1)
             handle = input("Could not detect handle. Enter your dest account @handle: ").strip("@")
 
-        confirm = input(f"Confirm: following as @{handle}? [y/N] ").strip().lower()
-        if confirm != "y":
-            print("Aborted.")
-            return
+        if not auto:
+            confirm = input(f"Confirm: following as @{handle}? [y/N] ").strip().lower()
+            if confirm != "y":
+                print("Aborted.")
+                return
+        else:
+            ui.console.print(f"  Auto mode — following as [bold]@{handle}[/bold]")
 
-        to_process = pending[:limit]
-        total = len(to_process)
+        session = 0
+        remaining = limit
+        while True:
+            data = progress_store.load(active_job)
+            pending = progress_store.pending(data)
+            if not pending or remaining <= 0:
+                break
 
-        print(f"\nProcessing {total} members (session limit: {limit} follows)...")
-        print("Do not interact with the browser while this runs.\n")
+            to_process = pending[:remaining]
+            total = len(to_process)
+            session += 1
 
-        progress = ui.make_progress()
-        task_id = progress.add_task("Following...", total=total)
+            if backoff_secs and session > 1:
+                ui.console.print(f"\n  [dim]Session {session} — {total} remaining (cap: {remaining})[/dim]")
+            else:
+                print(f"\nProcessing {total} members (session limit: {limit} follows)...")
+                print("Do not interact with the browser while this runs.\n")
 
-        with Live(progress, console=ui.console, refresh_per_second=4):
-            for username in to_process:
-                progress.update(task_id, description=f"@{username}")
+            progress = ui.make_progress()
+            task_id = progress.add_task("Following...", total=total)
+            hit_rate_limit = False
 
-                result = await follow_user(page, username)
-                data[username]["status"] = result
-                progress_store.save(active_job, data)
+            with Live(progress, console=ui.console, refresh_per_second=4):
+                for username in to_process:
+                    progress.update(task_id, description=f"@{username}")
 
-                progress.update(task_id, advance=1)
-                ui.console.print(f"  @{username}: {ui.status_style(result)}")
+                    result = await follow_user(page, username)
+                    data[username]["status"] = result
+                    progress_store.save(active_job, data)
 
-                if result == "rate_limited":
+                    progress.update(task_id, advance=1)
+                    ui.console.print(f"  @{username}: {ui.status_style(result)}")
+
+                    if result == "rate_limited":
+                        hit_rate_limit = True
+                        break
+
+                    remaining -= 1
+                    delay = human_delay()
+                    await asyncio.sleep(delay)
+
+            if hit_rate_limit:
+                if backoff_secs:
+                    jitter_cap = min(300, backoff_secs // 4)
+                    jitter = random.randint(-jitter_cap, jitter_cap)
+                    sleep_secs = max(1, backoff_secs + jitter)
+                    resume_in = f"{sleep_secs // 60}m {sleep_secs % 60}s"
+                    ui.console.print(f"\n  [bold yellow]Rate limited. Sleeping {resume_in} then resuming automatically.[/bold yellow]")
+                    ui.console.print("  Progress is saved. Safe to Ctrl-C if you want to stop.\n")
+                    await asyncio.sleep(sleep_secs)
+                    await page.goto("https://x.com/home")
+                    await asyncio.sleep(3)
+                    continue
+                else:
                     ui.console.print("\n  [bold red]X has throttled this account. Stopping now to protect it.[/bold red]")
-                    ui.console.print("  Re-run tomorrow. All progress is saved.\n")
+                    ui.console.print("  Re-run tomorrow (or use --backoff 2h to resume automatically). Progress is saved.\n")
                     break
-
-                delay = human_delay()
-                await asyncio.sleep(delay)
+            else:
+                break
 
         ui.print_summary(data, "Follow Session")
 

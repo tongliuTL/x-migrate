@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.2.0] — 2026-05-03
+
+### Added
+- `xm follow --auto` — skips the interactive login/confirmation prompts entirely. Requires a saved browser session (run once without `--auto` to log in first). Exits with a clear error if no session is found.
+- `xm follow --backoff DURATION` — after a rate-limit hit, sleep for the specified duration then resume in the same process. Supported formats: `2h`, `90m`, `3600s`. Combine with `--auto` for fully unattended overnight migration runs.
+- Jitter is applied to backoff sleeps (±25% of the requested duration, clamped to ±300 s) to avoid clustering when multiple accounts run on the same schedule.
+
+### Fixed
+- `--limit` now acts as a hard cap for the entire invocation across all backoff retry sessions. Previously each retry session selected up to `--limit` new follows, so a run with `--limit 20` could follow far more than 20 accounts if rate-limited mid-run.
+- Backoff jitter is now scaled relative to the requested duration (`min(300, duration // 4)` seconds). The previous fixed ±300 s jitter could reduce short values (e.g. `--backoff 45s`) to zero or negative, causing an immediate retry.
+
+### Test Coverage
+- 71 tests (up from 53), covering `parse_backoff`, auto mode (prompt-skipping, handle detection, unauthenticated exit), and the backoff retry loop (single rate limit, no rate limit, multiple consecutive rate limits).
+
+---
+
 ## [0.1.3] — 2026-03-25
 
 ### Changed
