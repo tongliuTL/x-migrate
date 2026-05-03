@@ -58,6 +58,8 @@ def extract(
 def follow(
     limit: int = typer.Option(None, help="Maximum follows (default: daily_limit from config, or 20)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Simulate without making changes"),
+    auto: bool = typer.Option(False, "--auto", help="Skip login prompts (requires saved browser session)"),
+    backoff: str = typer.Option("0", "--backoff", help="Sleep duration after rate limit before retrying (e.g. 2h, 90m, 3600s). 0 = stop on rate limit."),
 ):
     """Follow accounts from extracted list."""
     if limit is None:
@@ -65,7 +67,7 @@ def follow(
             limit = cfg.load().get("daily_limit", 20)
         except SystemExit:
             limit = 20
-    asyncio.run(run_follow(limit=limit, dry_run=dry_run))
+    asyncio.run(run_follow(limit=limit, dry_run=dry_run, auto=auto, backoff=backoff))
 
 
 @app.command()
