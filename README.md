@@ -184,6 +184,10 @@ Pre-releases (e.g. `v0.2.0-beta.1`) are automatically marked as pre-release on G
 
 Bug reports, feature requests, and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
+## Author
+
+Built by [Tong Liu](https://tongliu.md/). More projects and case studies are on [tongliu.md](https://tongliu.md/).
+
 ## License
 
 [MIT](LICENSE)
